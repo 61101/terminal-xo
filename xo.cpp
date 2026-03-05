@@ -7,14 +7,12 @@
 #include <ctime>
 using namespace std;
 
-// Macros
 #define wait(ms) (this_thread::sleep_for(chrono::milliseconds(ms)))
 #define cls (cout << "\033[2J\033[H")
 #define red "\033[31m"
 #define blue "\033[34m"
 #define reset "\033[0m"
 
-// Global variables
 char grid[9], winner;
 
 // Intro animation
@@ -139,7 +137,7 @@ int main() {
             printGrid();
             
             char player = (i % 2 == 0 ? 'X' : 'O');
-            cout << (player == 'X' ? red : blue) << player << reset << "'s turn: " << flush;
+            cout << (player == 'X' ? red : blue) << player << reset << "'s turn. [1-9] " << flush;
             
             if (solo && player == (startFirst ? 'O' : 'X')) play(player);
             else {
