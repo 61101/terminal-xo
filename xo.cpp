@@ -4,7 +4,6 @@
 #include <chrono>
 #include <thread>
 #include <cstdlib>
-#include <ctime>
 using namespace std;
 
 #define wait(ms) (this_thread::sleep_for(chrono::milliseconds(ms)))
@@ -118,7 +117,7 @@ int main() {
     intro();
     
     string input;
-    srand(time(0));
+    srand(steady_clock::now().time_since_epoch().count());
     
     while (true) {
         bool solo = true, startFirst = true;
@@ -151,6 +150,7 @@ int main() {
                 cin.ignore(100, '\n');
             }
         }
+        
         cls;
         printGrid();
         winner ? cout << (winner == 'X' ? red : blue) << winner << reset << " won the game!" << flush : cout << "It's a draw!" << flush;
@@ -165,5 +165,4 @@ int main() {
     }
     
     cout << "Goodbye.";
-    return 0;
 }
