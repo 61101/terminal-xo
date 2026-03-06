@@ -3,7 +3,6 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-#include <cstdlib>
 using namespace std;
 
 #define wait(ms) this_thread::sleep_for(chrono::milliseconds(ms))
@@ -145,7 +144,7 @@ int main() {
                     i--;
                     wait(1000);
                 } else grid[position - 1] = player;
-                cin.ignore(100, '\n');
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
             }
         }
         
