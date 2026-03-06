@@ -11,11 +11,13 @@ using namespace std;
 #define red "\e[31m"
 #define blue "\e[34m"
 #define purple "\e[35m"
+#define yellow "\e[33m"
 #define reset "\e[m"
 
 char grid[9], winner;
+int winLine[3] = {-1, -1, -1};
 
-// intro animation
+// plays the intro animation.
 void intro() {
     cls;
     cout << "starting";
@@ -29,8 +31,8 @@ void intro() {
 void printGrid() {
     cout << "\n " << string(13, '-') << '\n';
     for (int i = 0; i < 9; i++) {
-        if (grid[i]) cout << " | " << (grid[i] == 'X' ? red : blue) << grid[i] << reset;
-        else cout << " | " << (i + 1);
+        bool isWinCell = (i == winLine[0] || i == winLine[1] || i == winLine[2]);
+        grid[i] ? cout << " | " << (isWinCell ? yellow : (grid[i] == 'X' ? red : blue)) << grid[i] << reset : cout << " | " << (i + 1);
         if (i % 3 == 2) cout << " |\n " << string(13, '-') << '\n';
     }
     cout << '\n';
@@ -39,11 +41,13 @@ void printGrid() {
 // checks for a win or draw. sets winner and returns true if the game is over.
 bool checkGameOver() {
     winner = 0;
+    winLine[0] = winLine[1] = winLine[2] = -1;
     
     // check rows
     for (int i = 0; i < 7; i += 3) {
         if (grid[i] && grid[i] == grid[i + 1] && grid[i] == grid[i + 2]) {
             winner = grid[i];
+            winLine[0] = i; winLine[1] = i + 1; winLine[2] = i + 2;
             return true;
         }
     }
@@ -52,14 +56,23 @@ bool checkGameOver() {
     for (int i = 0; i < 3; i++) {
         if (grid[i] && grid[i] == grid[i + 3] && grid[i] == grid[i + 6]) {
             winner = grid[i];
+            winLine[0] = i; winLine[1] = i + 3; winLine[2] = i + 6;
             return true;
         }
     }
     
     // check diagonals
-    if (grid[4] && ((grid[4] == grid[0] && grid[4] == grid[8]) || (grid[4] == grid[2] && grid[4] == grid[6]))) {
-        winner = grid[4];
-        return true;
+    if (grid[4]) {
+        if (grid[4] == grid[0] && grid[4] == grid[8]) {
+            winner = grid[4];
+            winLine[0] = 0; winLine[1] = 4; winLine[2] = 8;
+            return true;
+        }
+        if (grid[4] == grid[2] && grid[4] == grid[6]) {
+            winner = grid[4];
+            winLine[0] = 2; winLine[1] = 4; winLine[2] = 6;
+            return true;
+        }
     }
     
     // draw: board is full and no winner
@@ -67,7 +80,7 @@ bool checkGameOver() {
     return true;
 }
 
-// AI: tries to win, blocks the human, or plays a random empty cell.
+// AI tries to win, blocks the human, or plays a random empty cell.
 void play(char ai) {
     char human = (ai == 'O' ? 'X' : 'O');
     
@@ -78,7 +91,7 @@ void play(char ai) {
             if (checkGameOver() && winner) {
                 dots;
                 cout << ' ' << i + 1;
-                wait(1000);
+                wait(500);
                 return;
             }
             grid[i] = 0;
@@ -93,7 +106,7 @@ void play(char ai) {
                 grid[i] = ai;
                 dots;
                 cout << ' ' << i + 1;
-                wait(1000);
+                wait(500);
                 return;
             }
             grid[i] = 0;
@@ -106,12 +119,12 @@ void play(char ai) {
     grid[num] = ai;
     dots;
     cout << ' ' << num + 1;
-    wait(1000);
+    wait(500);
 }
 
 int main() {
     srand(chrono::steady_clock::now().time_since_epoch().count()); // uses current time as a seed
-    cout << unitbuf; // flush buffer automatically
+    cout << unitbuf; // flushes output automatically
     intro();
     string input;
     
@@ -139,7 +152,7 @@ int main() {
                 cout << (player == 'X' ? red : blue) << player << reset "'s turn. [1-9] ";
                 int position;
                 if (!(cin >> position) || position > 9 || position < 1 || grid[position - 1]) {
-                    cout << "invalid input, try again.";
+                    cout << yellow << "invalid input, try again." << reset;
                     cin.clear();
                     i--;
                     wait(1000);
