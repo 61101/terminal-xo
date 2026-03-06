@@ -1,9 +1,13 @@
 // ### XO game written in C++ ###
 
+// ---------- libraries --------------------------------------------------------
+
 #include <iostream>
 #include <chrono>
 #include <thread>
 using namespace std;
+
+// ---------- macros -----------------------------------------------------------
 
 #define wait(ms) this_thread::sleep_for(chrono::milliseconds(ms))
 #define dots for (int i = 0; i < 3; i++, wait(500)) cout << '.'
@@ -14,11 +18,22 @@ using namespace std;
 #define yellow "\e[33m"
 #define reset "\e[m"
 
+// ---------- globals ----------------------------------------------------------
+
 char grid[9], winner;
 int winLine[3] = {-1, -1, -1};
+bool solo, startFirst;
 
-// plays the intro animation.
+// ---------- functions --------------------------------------------------------
+
+void init() {
+    // seed rng and disable output buffering
+    srand(chrono::steady_clock::now().time_since_epoch().count());
+    cout << unitbuf;
+}
+
 void intro() {
+    // play startup sequence
     cls;
     cout << "starting";
     dots;
@@ -27,22 +42,37 @@ void intro() {
     cls;
 }
 
-// prints the board. empty cells show their number [1-9], taken cells show X or O.
+void setup() {
+    // configure game mode and turn order
+    solo = true; startFirst = true;
+    string input;
+
+    cout << "play solo? [Y/n] ";
+    getline(cin, input);
+    if (input == "n" || input == "N") {
+        solo = false;
+        return;
+    }
+
+    cout << "start first? [Y/n] ";
+    getline(cin, input);
+    if (input == "n" || input == "N") startFirst = false;
+}
+
 void printGrid() {
     cout << "\n " << string(13, '-') << '\n';
     for (int i = 0; i < 9; i++) {
+        // highlight winning cells in yellow, x in red, o in blue
         bool isWinCell = (i == winLine[0] || i == winLine[1] || i == winLine[2]);
         grid[i] ? cout << " | " << (isWinCell ? yellow : (grid[i] == 'X' ? red : blue)) << grid[i] << reset : cout << " | " << (i + 1);
+
+        // draw horizontal dividers
         if (i % 3 == 2) cout << " |\n " << string(13, '-') << '\n';
     }
     cout << '\n';
 }
 
-// checks for a win or draw. sets winner and returns true if the game is over.
 bool checkGameOver() {
-    winner = 0;
-    winLine[0] = winLine[1] = winLine[2] = -1;
-    
     // check rows
     for (int i = 0; i < 7; i += 3) {
         if (grid[i] && grid[i] == grid[i + 1] && grid[i] == grid[i + 2]) {
@@ -51,7 +81,7 @@ bool checkGameOver() {
             return true;
         }
     }
-    
+
     // check columns
     for (int i = 0; i < 3; i++) {
         if (grid[i] && grid[i] == grid[i + 3] && grid[i] == grid[i + 6]) {
@@ -60,7 +90,7 @@ bool checkGameOver() {
             return true;
         }
     }
-    
+
     // check diagonals
     if (grid[4]) {
         if (grid[4] == grid[0] && grid[4] == grid[8]) {
@@ -74,17 +104,36 @@ bool checkGameOver() {
             return true;
         }
     }
-    
-    // draw: board is full and no winner
+
+    // otherwise reset win variables and check for draw
+    winner = 0;
+    for (int &i : winLine) i = -1;
     for (int i = 0; i < 9; i++) if (!grid[i]) return false;
     return true;
 }
 
-// AI tries to win, blocks the human, or plays a random empty cell.
-void play(char ai) {
+bool humanMove(char player) {
+    // read and validate input
+    int position;
+    if (!(cin >> position) || position > 9 || position < 1 || grid[position - 1]) {
+        cout << yellow << "invalid input, try again." << reset;
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        wait(1000);
+        return false;
+    }
+
+    // apply move and clear input buffer
+    grid[position - 1] = player;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    return true;
+}
+
+void aiMove(char ai) {
+    // determine human's character
     char human = (ai == 'O' ? 'X' : 'O');
-    
-    // 1. try winning move
+
+    // 1. check if ai can win on this turn
     for (int i = 0; i < 9; i++) {
         if (!grid[i]) {
             grid[i] = ai;
@@ -97,8 +146,8 @@ void play(char ai) {
             grid[i] = 0;
         }
     }
-    
-    // 2. block human
+
+    // 2. check if human can win on next turn and block them
     for (int i = 0; i < 9; i++) {
         if (!grid[i]) {
             grid[i] = human;
@@ -112,8 +161,8 @@ void play(char ai) {
             grid[i] = 0;
         }
     }
-    
-    // 3. otherwise random
+
+    // 3. pick a random empty cell as a fallback
     int num;
     do num = rand() % 9; while (grid[num]);
     grid[num] = ai;
@@ -122,60 +171,69 @@ void play(char ai) {
     wait(500);
 }
 
-int main() {
-    srand(chrono::steady_clock::now().time_since_epoch().count()); // uses current time as a seed
-    cout << unitbuf; // flushes output automatically
-    intro();
+void printResult() {
+    // display winner or draw message at the end of a round
+    cls;
+    printGrid();
+    winner ? cout << (winner == 'X' ? red : blue) << winner << reset " won the game. " : cout << "it's a " purple "draw" reset ". ";
+    wait(1000);
+}
+
+bool playAgain() {
+    // prompt user to continue playing
     string input;
-    
-    while (true) {
-        bool solo = true, startFirst = true;
-        cout << "play solo? [Y/n] ";
-        getline(cin, input);
-        if (input == "n" || input == "N") solo = false;
-        else {
-            cout << "start first? [Y/n] ";
-            getline(cin, input);
-            if (input == "n" || input == "N") startFirst = false;
-        }
-        
-        // 'i' tracks turns: even = X, odd = O
-        for (int i = 0; !checkGameOver(); i++) {
-            cls;
-            printGrid();
-            char player = (i % 2 == 0 ? 'X' : 'O');
-            
-            if (solo && player == (startFirst ? 'O' : 'X')) {
-                cout << (player == 'X' ? red : blue) << player << reset "'s turn. [AI] ";
-                play(player);
-            } else {
-                cout << (player == 'X' ? red : blue) << player << reset "'s turn. [1-9] ";
-                int position;
-                if (!(cin >> position) || position > 9 || position < 1 || grid[position - 1]) {
-                    cout << yellow << "invalid input, try again." << reset;
-                    cin.clear();
-                    i--;
-                    wait(1000);
-                } else grid[position - 1] = player;
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            }
-        }
-        
-        cls;
-        printGrid();
-        winner ? cout << (winner == 'X' ? red : blue) << winner << reset " won the game." : cout << "it's a " purple "draw" reset ".";
-        wait(1000);
-        cout << " play again? [Y/n] ";
-        getline(cin, input);
-        if (input == "n" || input == "N") break;
-        
-        // reset for next game
-        for (char &c : grid) c = 0;
-        cls;
-    }
-    
+    cout << "play again? [Y/n] ";
+    getline(cin, input);
+    return !(input == "n" || input == "N");
+}
+
+void resetGame() {
+    // clear grid for the next round
+    for (char &c : grid) c = 0;
+    cls;
+}
+
+void goodbye() {
+    // play shutdown sequence
     cls;
     cout << "goodbye.";
     wait(1000);
     cls;
+}
+
+// ---------- main -------------------------------------------------------------
+
+int main() {
+    init();
+    intro();
+
+    do {
+        setup();
+
+        // main game loop
+        for (int i = 0; !checkGameOver(); i++) {
+            cls;
+            printGrid();
+
+            // determine current player based on turn number
+            char player = (i % 2 == 0 ? 'X' : 'O');
+            cout << (player == 'X' ? red : blue) << player << reset;
+
+            // ai turn
+            if (solo && player == (startFirst ? 'O' : 'X')) {
+                cout << "'s turn. [AI] ";
+                aiMove(player);
+            // human turn
+            } else {
+                cout << "'s turn. [1-9] ";
+                if (!humanMove(player)) i--;
+            }
+        }
+
+        printResult();
+        if (!playAgain()) break;
+        resetGame();
+    } while (true);
+
+    goodbye();
 }
