@@ -21,7 +21,7 @@ using namespace std;
 // ---------- globals ----------------------------------------------------------
 
 int players, scoreX = 0, scoreO = 0, draws = 0, winLine[3] = {-1, -1, -1};
-bool startFirst;
+bool humanFirst;
 char grid[9], winner;
 
 // ---------- functions --------------------------------------------------------
@@ -48,6 +48,7 @@ void setup() {
     if (players) {
         cout << "Change settings? [y/N] ";
         getline(cin, input);
+        cls;
         if (!(input == "y" || input == "Y")) return;
     }
     
@@ -58,8 +59,9 @@ void setup() {
     if (players == 1) {
         cout << "Start first? [Y/n] ";
         getline(cin, input);
-        startFirst = !(input == "n" || input == "N");
+        humanFirst = !(input == "n" || input == "N");
     }
+    cls;
 }
 
 void printState() {
@@ -69,8 +71,6 @@ void printState() {
         // highlight winning cells in yellow, x in red, o in blue
         bool isWinCell = (i == winLine[0] || i == winLine[1] || i == winLine[2]);
         grid[i] ? cout << " | " << (isWinCell ? yellow : (grid[i] == 'X' ? red : blue)) << grid[i] << reset : cout << " | " << (i + 1);
-        
-        // draw horizontal dividers
         if (i % 3 == 2) cout << " |\n " << string(13, '-') << '\n';
     }
 
@@ -78,7 +78,7 @@ void printState() {
     cout << "\n " << red << "X: " << scoreX << reset << "  |  " << purple << "Draws: " << draws << reset << "  |  " << blue << "O: " << scoreO << reset << "\n\n";
 }
 
-bool checkGameOver() {
+bool gameOver() {
     // check rows
     for (int i = 0; i < 7; i += 3) {
         if (grid[i] && grid[i] == grid[i + 1] && grid[i] == grid[i + 2]) {
@@ -147,17 +147,17 @@ void aiMove(char player) {
     for (int i = 0; i < 9; i++) {
         if (!grid[i]) {
             grid[i] = player;
-            if (checkGameOver() && winner) return;
+            if (gameOver() && winner) return;
             grid[i] = 0;
         }
     }
     
-    // 2. check if opponent can win and block them
+    // 2. block opponent if they can win
     char opponent = (player == 'O' ? 'X' : 'O');
     for (int i = 0; i < 9; i++) {
         if (!grid[i]) {
             grid[i] = opponent;
-            if (checkGameOver() && winner) {
+            if (gameOver() && winner) {
                 grid[i] = player;
                 return;
             }
@@ -197,16 +197,15 @@ void loop() {
     // main game loop
     do {
         setup();
-        cls;
         
-        for (int i = 0; !checkGameOver(); i++) {
+        for (int i = 0; !gameOver(); i++) {
             printState();
 
             // determine current player
             char player = (i % 2 == 0 ? 'X' : 'O');
 
             // determine who plays (ai or human?)
-            if (players == 1 && player == (startFirst ? 'O' : 'X')) aiMove(player);
+            if (players == 1 && player == (humanFirst ? 'O' : 'X')) aiMove(player);
             else if (!humanMove(player)) i--;
 
             cls;
