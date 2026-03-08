@@ -108,8 +108,8 @@ bool checkGameOver() {
 
     // otherwise reset win variables and check for draw
     winner = 0;
-    for (int &i : winLine) i = -1;
-    for (int i = 0; i < 9; i++) if (!grid[i]) return false;
+    for (int &x : winLine) x = -1;
+    for (char x : grid) if (!x) return false;
     return true;
 }
 
@@ -175,7 +175,7 @@ void aiMove(char ai) {
 bool gameEnd() {
     // display winner or draw message at the end of a round
     printGrid();
-    winner ? cout << (winner == 'X' ? red : blue) << winner << reset " won the game. " : cout << "It's a " purple "draw" reset ". ";
+    winner ? cout << (winner == 'X' ? red : blue) << winner << reset << " won the game. " : cout << "It's a " << purple << "draw" << reset << ". ";
     wait(1000);
 
     // prompt user to continue playing
@@ -188,7 +188,7 @@ bool gameEnd() {
 
 void resetGame() {
     // clear grid for the next round
-    for (char &c : grid) c = 0;
+    for (char &x : grid) x = 0;
 }
 
 void goodbye() {
