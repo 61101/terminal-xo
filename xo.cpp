@@ -142,7 +142,6 @@ bool checkstate() {
 }
 
 void humanmove(char player) {
-    // print player's turn
     cout << (player == 'X' ? red : blue) << player << reset << "'s turn. [1-9] ";
     
     // read and validate input
@@ -164,21 +163,17 @@ void humanmove(char player) {
 }
 
 void aimove(char player) {
-    // print ai's turn
     cout << (player == 'X' ? red : blue) << player << reset << "'s turn. [AI] ";
     for (int i = 0; i < 3; i++, wait(500)) cout << '.';
     
-    // 1. win if possible
     for (int i = 0; i < 9; i++) {
+        // 1. win if possible
         if (!grid[i]) {
             grid[i] = player;
             if (checkstate() && winner) return;
             grid[i] = 0;
         }
-    }
-    
-    // 2. block human if they can win
-    for (int i = 0; i < 9; i++) {
+        // 2. block human if they can win
         if (!grid[i]) {
             grid[i] = human;
             if (checkstate() && winner) {
@@ -227,11 +222,9 @@ void loop() {
         
         for (int i = 0; !checkstate(); i++) {
             printstate();
-            
             // determine who plays
             char player = (i % 2 == 0 ? first : second);
             (mode == 1 && player != human) ? aimove(player) : humanmove(player);
-            
             cls;
         }
     } while (!gameover());
