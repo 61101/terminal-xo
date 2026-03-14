@@ -78,21 +78,6 @@ void setup()
     hidecur;
 }
 
-void printstate()
-{
-    cout << "\n ┌───┬───┬───┐\n";
-    for (int i = 0; i < 9; i++)
-    {
-        bool iswincell = (i == wincells[0] || i == wincells[1] || i == wincells[2]);
-        cout << " │ ";
-        grid[i] ? (cout << (iswincell ? yellow : (grid[i] == 'X' ? red : blue)) << grid[i] << reset) : (cout << i + 1);
-        if (i == 2 || i == 5) cout << " │\n ├───┼───┼───┤\n";
-    }
-    cout << " │\n └───┴───┴───┘\n";
-
-    cout << "\n " << red << "X: " << scorex << reset << "  |  " << purple << "Draws: " << draws << reset << "  |  " << blue << "O: " << scoreo << reset << "\n\n";
-}
-
 bool checkstate()
 {
     for (int i = 0; i < 7; i += 3)
@@ -143,6 +128,21 @@ bool checkstate()
     for (int &x : wincells) x = -1;
     for (char x : grid) if (!x) return false;
     return true;
+}
+
+void printstate()
+{
+    cout << "\n ┌───┬───┬───┐\n";
+    for (int i = 0; i < 9; i++)
+    {
+        bool iswincell = (i == wincells[0] || i == wincells[1] || i == wincells[2]);
+        cout << " │ ";
+        grid[i] ? (cout << (iswincell ? yellow : (grid[i] == 'X' ? red : blue)) << grid[i] << reset) : (cout << i + 1);
+        if (i == 2 || i == 5) cout << " │\n ├───┼───┼───┤\n";
+    }
+    cout << " │\n └───┴───┴───┘\n";
+
+    cout << "\n " << red << "X: " << scorex << reset << "  |  " << purple << "Draws: " << draws << reset << "  |  " << blue << "O: " << scoreo << reset << "\n\n";
 }
 
 void humanmove(char character)
@@ -209,7 +209,7 @@ bool gameover()
     winner == 'X' ? scorex++ : (winner == 'O' ? scoreo++ : draws++);
     
     printstate();
-    winner ? cout << (winner == 'X' ? red : blue) << winner << reset << " won the game. " : cout << "It's a " << purple << "draw" << reset << ". ";
+    winner ? (cout << (winner == 'X' ? red : blue) << winner << reset << " won the game. ") : (cout << "It's a " << purple << "draw" << reset << ". ");
     wait(1000);
 
     cout << "Play again? [Y/n] ";
