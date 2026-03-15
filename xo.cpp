@@ -1,11 +1,11 @@
-// ────────── libraries ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────── libraries
 
 #include <iostream>
 #include <chrono>
 #include <thread>
 using namespace std;
 
-// ────────── macros ───────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────── macros
 
 #define wait(ms) cout << flush, this_thread::sleep_for(chrono::milliseconds(ms))
 #define cls cout << "\e[2J\e[H"
@@ -17,19 +17,19 @@ using namespace std;
 #define yellow "\e[93m"
 #define reset "\e[m"
 
-// ────────── globals ──────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────── globals
 
 char player, character1, character2, grid[9], winner;
 int mode, scorex, scoreo, draws, wincells[3] = {-1, -1, -1};
 
-// ────────── functions ────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────── functions
 
 void startup()
 {
     srand(time(0));
-    
     cls;
     hidecur;
+    
     cout << "Loading";
     for (int i = 0; i < 3; i++, wait(500)) cout << '.';
     cout << "\nWelcome to terminal XO.";
@@ -125,8 +125,8 @@ bool checkstate()
     }
 
     winner = 0;
-    for (int &x : wincells) x = -1;
-    for (char x : grid) if (!x) return false;
+    for (int &wincell : wincells) wincell = -1;
+    for (char cell : grid) if (!cell) return false;
     return true;
 }
 
@@ -138,11 +138,10 @@ void printstate()
         bool iswincell = (i == wincells[0] || i == wincells[1] || i == wincells[2]);
         cout << " │ ";
         grid[i] ? (cout << (iswincell ? yellow : (grid[i] == 'X' ? red : blue)) << grid[i] << reset) : (cout << i + 1);
-        if (i == 2 || i == 5) cout << " │\n ├───┼───┼───┤\n";
+        if (i % 3 == 2) cout << " │\n " << (i != 8 ? "├───┼───┼───┤\n" : "└───┴───┴───┘\n\n ");
     }
-    cout << " │\n └───┴───┴───┘\n";
 
-    cout << "\n " << red << "X: " << scorex << reset << "  |  " << purple << "Draws: " << draws << reset << "  |  " << blue << "O: " << scoreo << reset << "\n\n";
+    cout << red << "X: " << scorex << reset << "  |  " << purple << "Draws: " << draws << reset << "  |  " << blue << "O: " << scoreo << reset << "\n\n";
 }
 
 void humanmove(char character)
@@ -198,10 +197,10 @@ void aimove(char character)
         }
     }
 
-    int num;
-    do num = rand() % 9;
-    while (grid[num]);
-    grid[num] = character;
+    int randcell;
+    do randcell = rand() % 9;
+    while (grid[randcell]);
+    grid[randcell] = character;
 }
 
 bool gameover()
@@ -209,17 +208,17 @@ bool gameover()
     winner == 'X' ? scorex++ : (winner == 'O' ? scoreo++ : draws++);
     
     printstate();
-    winner ? (cout << (winner == 'X' ? red : blue) << winner << reset << " won the game. ") : (cout << "It's a " << purple << "draw" << reset << ". ");
+    winner ? (cout << (winner == 'X' ? red : blue) << winner << reset << " won the game.") : (cout << "It's a " << purple << "draw" << reset << '.');
     wait(1000);
-
-    cout << "Play again? [Y/n] ";
+    
+    cout << " Play again? [Y/n] ";
     string input;
     showcur;
     getline(cin, input);
     hidecur;
 
     cls;
-    for (char &x : grid) x = 0;
+    for (char &cell : grid) cell = 0;
     return (input == "n" || input == "N");
 }
 
@@ -229,10 +228,10 @@ void gameloop()
     {
         setup();
 
-        for (int i = 0; !checkstate(); i++)
+        for (bool turn = true; !checkstate(); turn = !turn)
         {
             printstate();
-            char character = (i % 2 == 0 ? character1 : character2);
+            char character = (turn ? character1 : character2);
             (mode == 1 && character != player) ? aimove(character) : humanmove(character);
             cls;
         }
@@ -248,7 +247,7 @@ void shutdown()
     showcur;
 }
 
-// ────────── main ─────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────── main
 
 int main()
 {
